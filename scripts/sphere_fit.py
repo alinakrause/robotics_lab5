@@ -13,15 +13,16 @@ from robot_vision_lectures.msg import SphereParams
 
 xyz_data = XYZarray
 sphere_data = SphereParams
-
 sphere_computed = False
 
-# get the image message
-def get_points(data):
-	A_B(data.points)
+
+def compute_model(data):
 	
-	
-def A_B(points):
+	global points
+	global sphere_data
+	global sphere_computed
+
+	#compute matrices A and B 
 	A = []
 	B = []
 	for i in range(len(points)):
@@ -33,30 +34,32 @@ def A_B(points):
 		A.append(A2)
 		B.append(points[i].x**2 + points[i].y**2 + points[i].z**2)
 	
-	compute_sphere(A,B)
+
+	#compute P
+	P = np.linalg.lstsq(A, B, rcond=None)[0]
+	#compute radius
+	r = np.sqrt(P[0]**2 + P[1]**2 + P[2]**2 + P[3])
 	
-	
-def compute_sphere(A,B):
-	p = np.linalg.lstsq(A, B, rcond=None)[0]
-	r = np.sqrt(p[0]**2 + p[1]**2 + p[2]**2 + p[3])
-	sphere_data.xc = p[0]
-	sphere_data.yc = p[1]
-	sphere_data.zc = p[2]
+	#assign coordinates and radius
+	sphere_data.xc = P[0]
+	sphere_data.yc = P[1]
+	sphere_data.zc = P[2]
 	sphere_data.radius = r
+	
 	sphere_computed = True
 
 if __name__ == '__main__':
-	# define the node and subcribers and publishers
+	# define the node
 	rospy.init_node('sphere_fit', anonymous = True)
-	# define a subscriber to ream images
+	# define a subscriber to read images
 	img_sub = rospy.Subscriber("/xyz_cropped_ball", XYZarray, get_points) 
 	# define a publisher to publish images
-	sphere_pub = rospy.Publisher('/sphere_params', SphereParams, queue_size = 1)
+	img_pub = rospy.Publisher('/sphere_params', SphereParams, queue_size = 1)
 	
 	# set the loop frequency
 	rate = rospy.Rate(10)
 
 	while not rospy.is_shutdown():
 		if sphere_computed: 
-			sphere_pub.publish(sphere_data)
+			img_pub.publish(sphere_data)
 		rate.sleep()
