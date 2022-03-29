@@ -11,8 +11,8 @@ from robot_vision_lectures.msg import SphereParams
 
 
 
-xyz_data = XYZarray
-sphere_data = SphereParams
+xyz_data = XYZarray()
+sphere_data = SphereParams()
 sphere_computed = False
 
 
@@ -22,6 +22,8 @@ def compute_model(data):
 	global sphere_data
 	global sphere_computed
 
+	points = data.points
+	
 	#compute matrices A and B 
 	A = []
 	B = []
@@ -52,7 +54,7 @@ if __name__ == '__main__':
 	# define the node
 	rospy.init_node('sphere_fit', anonymous = True)
 	# define a subscriber to read images
-	img_sub = rospy.Subscriber("/xyz_cropped_ball", XYZarray, get_points) 
+	img_sub = rospy.Subscriber("/xyz_cropped_ball", XYZarray, compute_model) 
 	# define a publisher to publish images
 	img_pub = rospy.Publisher('/sphere_params', SphereParams, queue_size = 1)
 	
